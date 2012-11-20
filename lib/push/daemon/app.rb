@@ -60,7 +60,7 @@ module Push
       end
 
       def start
-        @connection_pool = ConnectionPool.new
+        @connection_pool = Push::Daemon::ConnectionPool.new
         @configs.each do |config|
           provider = load_provider(config.name, config.properties.merge({:connections => config.connections, :name => config.app}))
           @providers << provider

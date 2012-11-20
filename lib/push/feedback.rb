@@ -3,7 +3,10 @@ module Push
     include Push::Daemon::DatabaseReconnectable
     self.table_name = 'push_feedback'
 
-    scope :ready_for_followup, where(:processed => false)
+    def self.ready_for_followup
+      self.scoped.where(:processed => false)
+    end
+
     validates :app, :presence => true
     validates :device, :presence => true
     validates :follow_up, :presence => true
