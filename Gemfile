@@ -5,12 +5,13 @@ source "http://rubygems.org"
 # development dependencies will be added by default to the :development group.
 gemspec
 
-gem 'rake'
+gem 'rake', '=0.8.7'
+gem 'mysql2', '=0.2.6'
+
 gem 'rspec'
 gem 'shoulda'
 gem 'activerecord', :require => 'active_record'
 gem 'pg'
-gem 'mysql2'
 gem 'sqlite3'
 gem 'database_cleaner'
 gem 'simplecov'
