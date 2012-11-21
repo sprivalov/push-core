@@ -1,59 +1,73 @@
 module Push
   module Daemon
     class DeliveryQueue
-      class WakeupError < StandardError; end
+      class WakeupError < StandardError;
+      end
+
       def initialize
         @num_notifications = 0
         @queue = []
         @waiting = []
-        @mutex = Mutex.new
+      end
+
+
+      def push(obj)
+        Thread.critical = true
+        @queue.push obj
+        @num_notifications += 1
+        begin
+          t = @waiting.shift
+          t.wakeup if t
+        rescue ThreadError
+          retry
+        ensure
+          Thread.critical = false
+        end
+        begin
+          t.run if t
+        rescue ThreadError
+        end
+      end
+
+      def pop
+        while (Thread.critical = true; @queue.empty?)
+          @waiting.push Thread.current
+          Thread.stop
+        end
+        @queue.shift
+      ensure
+        Thread.critical = false
       end
 
       def wakeup(thread)
-        @mutex.synchronize do
+        synchronize do
           t = @waiting.delete(thread)
           t.raise WakeupError if t
         end
       end
 
       def size
-        @mutex.synchronize { @queue.size }
+        synchronize { @queue.size }
       end
 
       def notification_processed
-        @mutex.synchronize { @num_notifications -= 1 }
+        synchronize { @num_notifications -= 1 }
       end
 
       def notifications_processed?
-        @mutex.synchronize { @num_notifications == 0 }
+        synchronize { @num_notifications == 0 }
       end
 
-      def push(notification)
-        @mutex.synchronize do
-          @num_notifications += 1
-          @queue.push(notification)
-
-          begin
-            t = @waiting.shift
-            t.wakeup if t
-          rescue ThreadError
-            retry
-          end
+protected
+      def synchronize
+        Thread.critical = true
+        begin
+          yield
+        ensure
+          Thread.critical = false
         end
       end
 
-      def pop
-        @mutex.synchronize do
-          while true
-            if @queue.empty?
-              @waiting.push Thread.current
-              @mutex.sleep
-            else
-              return @queue.shift
-            end
-          end
-        end
-      end
     end
   end
 end
