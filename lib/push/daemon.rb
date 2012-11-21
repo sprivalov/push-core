@@ -44,7 +44,7 @@ module Push
     protected
 
     def self.rescale_poolsize(size)
-      h = ActiveRecord::Base.connection_config
+      h = ActiveRecord::Base.connection_pool.spec.config
       # 1 feeder + providers
       h[:pool] = 1 + size
 
